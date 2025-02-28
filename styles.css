@@ -84,17 +84,13 @@ body {
 
 .theme-content {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .theme-main {
     flex: 1;
-}
-
-.theme-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
 }
 
 .theme-title {
@@ -110,7 +106,6 @@ body {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    margin-top: 14px;
     font-size: var(--font-size-sm);
     color: var(--text-color-secondary);
     gap: 12px;

@@ -884,11 +884,10 @@ function renderThemes() {
                     <div class="theme-header">
                         <div class="theme-title">${theme.mainTheme || '无标题'}</div>
                     </div>
-                    <div class="theme-meta">
-                        <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
-                        <span class="date">${formatDate(theme.additionTime) || ''}</span>
-                        <span class="priority ${theme.priority === '高' ? 'high' : ''} ${theme.priority === '低' ? 'low' : ''}">${theme.priority || '低'}</span>
-                    </div>
+                </div>
+                <div class="theme-meta">
+                    <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
+                    <span class="priority ${theme.priority === '高' ? 'high' : ''} ${theme.priority === '低' ? 'low' : ''}">${theme.priority || '低'}</span>
                 </div>
             </div>
         `;
@@ -913,18 +912,12 @@ function showDetailModal(id) {
     detailTitle.textContent = theme.mainTheme || '无标题';
     
     // 构建详情内容
-    let formattedDate = formatDate(theme.additionTime);
-    
     themeDetailContent.innerHTML = `
         <div class="detail-item">
             <div class="detail-label">状态</div>
             <div class="detail-value">
                 <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
             </div>
-        </div>
-        <div class="detail-item">
-            <div class="detail-label">添加时间</div>
-            <div class="detail-value">${formattedDate}</div>
         </div>
         <div class="detail-item">
             <div class="detail-label">优先级</div>

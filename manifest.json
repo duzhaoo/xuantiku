@@ -1,6 +1,6 @@
 {
-  "name": "HD协同应用",
-  "short_name": "HD协同",
+  "name": "选题库",
+  "short_name": "选题库",
   "description": "一个用于HD协同的PWA应用",
   "start_url": "/",
   "id": "/",

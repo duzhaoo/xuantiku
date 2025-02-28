@@ -4,137 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="HD协作平台 - 管理工作主题和协作任务">
-    <meta name="theme-color" content="#1890ff">
+    <meta name="theme-color" content="#007AFF">
     <title>HD协作平台</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-512x512.png">
     <link rel="apple-touch-icon" href="icon-512x512.png">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
-    <!-- PWA相关元标签 -->
-    
-    <!-- 针对iOS设备的图标 -->
     
     <!-- 针对Safari的启动屏幕图像 -->
     <link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
 </head>
 <body>
     <div class="app-container">
-       
+        <header class="app-header">
+            <div class="logo">
+                <i class="fas fa-tasks"></i>
+                <h1>HD协作平台</h1>
+            </div>
+            <div id="sync-status"></div>
+        </header>
         
         <main class="main-content">
             <div class="page-header">
-                <div class="page-title">HD协同</div>
-                <button id="new-theme-btn" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> 新建主题
-                </button>
+                <h2 class="page-title">工作主题管理</h2>
+                <button id="add-theme-btn" class="btn btn-primary"><i class="fas fa-plus"></i> 新增主题</button>
+            </div>
+            
+            <div class="filter-container">
+                <span class="filter-title">筛选：</span>
+                <div class="ant-radio-group" id="status-filter">
+                    <label class="ant-radio-button active" data-value="all">
+                        <input type="radio" name="status" value="all" checked>
+                        全部
+                    </label>
+                    <label class="ant-radio-button" data-value="待开始">
+                        <input type="radio" name="status" value="待开始">
+                        待开始
+                    </label>
+                    <label class="ant-radio-button" data-value="进行中">
+                        <input type="radio" name="status" value="进行中">
+                        进行中
+                    </label>
+                    <label class="ant-radio-button" data-value="已完成">
+                        <input type="radio" name="status" value="已完成">
+                        已完成
+                    </label>
+                    <label class="ant-radio-button" data-value="已发布">
+                        <input type="radio" name="status" value="已发布">
+                        已发布
+                    </label>
+                </div>
             </div>
             
             <div class="card">
                 <div class="card-body">
-                    <div class="filter-container">
-                        
-                        <div class="ant-radio-group">
-                            <label class="ant-radio-button active" data-status="all">
-                                <input type="radio" name="status" checked>
-                                <span>全部</span>
-                            </label>
-                            <label class="ant-radio-button" data-status="待开始">
-                                <input type="radio" name="status">
-                                <span>待开始</span>
-                            </label>
-                            <label class="ant-radio-button" data-status="进行中">
-                                <input type="radio" name="status">
-                                <span>进行中</span>
-                            </label>
-                            <label class="ant-radio-button" data-status="已发布">
-                                <input type="radio" name="status">
-                                <span>已发布</span>
-                            </label>
-                            <label class="ant-radio-button" data-status="已完成">
-                                <input type="radio" name="status">
-                                <span>已完成</span>
-                            </label>
-                        </div>
-                    </div>
-                    
                     <div id="themes-list" class="themes-list">
-                        <!-- 主题将通过JavaScript动态添加 -->
+                        <!-- 主题列表将通过JavaScript动态生成 -->
+                        <div class="loading">加载中...</div>
                     </div>
                 </div>
             </div>
         </main>
         
-        <div id="theme-form-modal" class="ant-modal">
+        <!-- 添加主题模态框 -->
+        <div id="add-theme-modal" class="ant-modal">
             <div class="ant-modal-mask"></div>
             <div class="ant-modal-wrap">
                 <div class="ant-modal-content">
                     <div class="ant-modal-header">
-                        <div class="ant-modal-title" id="modal-title">创建新主题</div>
-                        <button id="close-modal-btn" class="ant-modal-close">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <h3 class="ant-modal-title">添加新主题</h3>
+                        <button class="ant-modal-close" id="close-add-modal"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="ant-modal-body">
-                        <form id="new-theme-form" class="ant-form">
+                        <form id="add-theme-form">
                             <div class="ant-form-item">
-                                <label for="theme-title" class="ant-form-label">标题</label>
+                                <label class="ant-form-label">主题标题</label>
                                 <div class="ant-form-control">
-                                    <input type="text" id="theme-title" class="ant-input" placeholder="请输入主题标题" required>
+                                    <input type="text" class="ant-input" id="theme-title" placeholder="请输入主题标题" required>
                                 </div>
                             </div>
                             <div class="ant-form-item">
-                                <label for="theme-description" class="ant-form-label">描述</label>
+                                <label class="ant-form-label">状态</label>
                                 <div class="ant-form-control">
-                                    <textarea id="theme-description" class="ant-input" rows="3" placeholder="请输入主题描述"></textarea>
-                                </div>
-                            </div>
-                            <div class="ant-form-item">
-                                <label for="theme-status" class="ant-form-label">状态</label>
-                                <div class="ant-form-control">
-                                    <select id="theme-status" class="ant-select">
+                                    <select class="ant-select" id="theme-status">
                                         <option value="待开始">待开始</option>
                                         <option value="进行中">进行中</option>
-                                        <option value="已发布">已发布</option>
                                         <option value="已完成">已完成</option>
+                                        <option value="已发布">已发布</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="ant-form-item">
+                                <label class="ant-form-label">优先级</label>
+                                <div class="ant-form-control">
+                                    <select class="ant-select" id="theme-priority">
+                                        <option value="低">低</option>
+                                        <option value="中">中</option>
+                                        <option value="高">高</option>
                                     </select>
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="ant-modal-footer">
-                        <button type="button" id="cancel-btn" class="btn btn-default">取消</button>
-                        <button type="submit" id="submit-btn" class="btn btn-primary">确定</button>
+                        <button class="btn btn-default" id="cancel-add">取消</button>
+                        <button class="btn btn-primary" id="confirm-add">确定</button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- 添加详情模态框 -->
-        <div id="theme-detail-modal" class="ant-modal">
+        
+        <!-- 详情模态框 -->
+        <div id="detail-modal" class="ant-modal">
             <div class="ant-modal-mask"></div>
             <div class="ant-modal-wrap">
                 <div class="ant-modal-content">
                     <div class="ant-modal-header">
-                        <div class="ant-modal-title" id="detail-title">主题详情</div>
-                        <button id="close-detail-modal-btn" class="ant-modal-close">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <h3 class="ant-modal-title" id="detail-title">主题详情</h3>
+                        <button class="ant-modal-close" id="close-detail-modal"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="ant-modal-body">
                         <div id="theme-detail-content">
-                            <!-- 详情内容将通过JavaScript动态添加 -->
+                            <!-- 详情内容将通过JavaScript动态生成 -->
                         </div>
                     </div>
                     <div class="ant-modal-footer">
-                        <button type="button" id="edit-theme-btn" class="btn btn-default">
-                            <i class="fas fa-edit"></i> 编辑
-                        </button>
-                        <button type="button" id="delete-theme-btn" class="btn btn-danger">
-                            <i class="fas fa-trash-alt"></i> 删除
-                        </button>
+                        <button class="btn btn-default" id="close-detail">关闭</button>
+                        <button class="btn btn-primary" id="edit-theme">编辑</button>
                     </div>
                 </div>
             </div>

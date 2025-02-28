@@ -102,23 +102,22 @@ request.onerror = function(event) {
 };
 
 // DOM元素
-const newThemeForm = document.getElementById('new-theme-form');
+const addThemeForm = document.getElementById('add-theme-form');
 const themeTitleInput = document.getElementById('theme-title');
-const themeDescriptionInput = document.getElementById('theme-description');
 const themeStatusSelect = document.getElementById('theme-status');
+const themePrioritySelect = document.getElementById('theme-priority');
 const themesList = document.getElementById('themes-list');
 const filterButtons = document.querySelectorAll('.ant-radio-button');
-const newThemeBtn = document.getElementById('new-theme-btn');
-const themeFormModal = document.getElementById('theme-form-modal');
-const cancelBtn = document.getElementById('cancel-btn');
-const closeModalBtn = document.getElementById('close-modal-btn');
-const submitBtn = document.getElementById('submit-btn');
-const modalTitle = document.getElementById('modal-title');
-const themeDetailModal = document.getElementById('theme-detail-modal');
-const closeDetailModalBtn = document.getElementById('close-detail-modal-btn');
+const addThemeBtn = document.getElementById('add-theme-btn');
+const addThemeModal = document.getElementById('add-theme-modal');
+const cancelAddBtn = document.getElementById('cancel-add');
+const closeAddModalBtn = document.getElementById('close-add-modal');
+const confirmAddBtn = document.getElementById('confirm-add');
+const detailModal = document.getElementById('detail-modal');
+const closeDetailModalBtn = document.getElementById('close-detail-modal');
 const themeDetailContent = document.getElementById('theme-detail-content');
-const editThemeBtn = document.getElementById('edit-theme-btn');
-const deleteThemeBtn = document.getElementById('delete-theme-btn');
+const editThemeBtn = document.getElementById('edit-theme');
+const closeDetailBtn = document.getElementById('close-detail');
 const detailTitle = document.getElementById('detail-title');
 
 let currentThemeId = null;
@@ -184,6 +183,9 @@ async function init() {
         // 检查在线状态
         updateOnlineStatus();
         
+        // 设置事件监听器
+        setupEventListeners();
+        
         if (isOnline) {
             // 尝试连接飞书API
             await initFeishuConnection();
@@ -211,18 +213,6 @@ async function init() {
         }
         renderThemes();
     }
-    
-    // 添加此检查作为最后保障
-    // 如果主题列表为空或全部标签下没有显示任何内容，则再次尝试渲染
-    setTimeout(() => {
-        if (themesList.children.length === 0 && currentFilter === 'all' && themes.length > 0) {
-            console.log('延迟渲染检查：发现主题列表为空，强制重新渲染');
-            renderThemes();
-        }
-    }, 1000);
-    
-    // 设置事件监听器
-    setupEventListeners();
     
     // 监听Service Worker消息
     if (navigator.serviceWorker) {
@@ -333,43 +323,6 @@ async function getAccessToken() {
         console.log('成功获取访问令牌');
     } catch (error) {
         console.error('获取访问令牌失败:', error);
-        throw error;
-    }
-}
-
-// 获取表格信息 - 保留但不再调用此函数
-async function getTableInfo() {
-    try {
-        // 如果已经有表格ID，则跳过
-        if (FEISHU_CONFIG.TABLE_ID) {
-            return;
-        }
-        
-        const url = `${FEISHU_CONFIG.API_BASE_URL}/feishu/bitable/v1/apps/${FEISHU_CONFIG.APP_TOKEN}/tables`;
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`获取表格信息失败: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.code !== 0 || !data.data || !data.data.items || data.data.items.length === 0) {
-            throw new Error('未找到表格信息');
-        }
-        
-        // 使用第一个表格
-        FEISHU_CONFIG.TABLE_ID = data.data.items[0].table_id;
-        console.log('成功获取表格ID:', FEISHU_CONFIG.TABLE_ID);
-    } catch (error) {
-        console.error('获取表格信息失败:', error);
         throw error;
     }
 }
@@ -607,53 +560,44 @@ async function deleteThemeFromFeishu(id) {
 
 // 设置事件监听器
 function setupEventListeners() {
+    // 筛选器点击事件处理
+    handleFilterClick();
+    
     // 提交按钮点击事件
-    submitBtn.addEventListener('click', async function() {
-        if (newThemeForm.checkValidity()) {
+    confirmAddBtn.addEventListener('click', async function() {
+        if (addThemeForm.checkValidity()) {
             try {
                 if (isEditing) {
                     await updateTheme();
                 } else {
                     await addNewTheme();
                 }
-                hideModal();
+                hideAddModal();
             } catch (error) {
                 console.error('操作失败:', error);
                 alert('操作失败，请重试');
             }
         } else {
-            newThemeForm.reportValidity();
+            addThemeForm.reportValidity();
         }
     });
     
-    // 筛选按钮点击事件
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentFilter = this.dataset.status;
-            console.log('切换状态筛选:', currentFilter);
-            renderThemes();
-        });
-    });
-    
     // 新建主题按钮点击事件
-    newThemeBtn.addEventListener('click', function() {
+    addThemeBtn.addEventListener('click', function() {
         isEditing = false;
-        modalTitle.textContent = '创建新主题';
-        showModal();
+        showAddModal();
     });
     
     // 取消按钮点击事件
-    cancelBtn.addEventListener('click', hideModal);
+    cancelAddBtn.addEventListener('click', hideAddModal);
     
     // 关闭模态框按钮点击事件
-    closeModalBtn.addEventListener('click', hideModal);
+    closeAddModalBtn.addEventListener('click', hideAddModal);
     
     // 点击模态框外部关闭
-    themeFormModal.addEventListener('click', function(e) {
-        if (e.target === themeFormModal || e.target.classList.contains('ant-modal-wrap')) {
-            hideModal();
+    addThemeModal.addEventListener('click', function(e) {
+        if (e.target === addThemeModal || e.target.classList.contains('ant-modal-wrap')) {
+            hideAddModal();
         }
     });
     
@@ -661,60 +605,79 @@ function setupEventListeners() {
     closeDetailModalBtn.addEventListener('click', hideDetailModal);
     
     // 点击详情模态框外部关闭
-    themeDetailModal.addEventListener('click', function(e) {
-        if (e.target === themeDetailModal || e.target.classList.contains('ant-modal-wrap')) {
+    detailModal.addEventListener('click', function(e) {
+        if (e.target === detailModal || e.target.classList.contains('ant-modal-wrap')) {
             hideDetailModal();
         }
     });
     
     // 编辑按钮点击事件
-    editThemeBtn.addEventListener('click', function() {
-        if (currentThemeId) {
-            hideDetailModal();
-            editTheme(currentThemeId);
-        }
-    });
+    setupEditButtonEvent();
     
     // 删除按钮点击事件
-    deleteThemeBtn.addEventListener('click', function() {
-        if (currentThemeId) {
-            deleteTheme(currentThemeId);
-            hideDetailModal();
-        }
-    });
+    // deleteThemeBtn.addEventListener('click', function() {
+    //     if (currentThemeId) {
+    //         deleteTheme(currentThemeId);
+    //         hideDetailModal();
+    //     }
+    // });
     
     // 键盘事件 - ESC键关闭模态框
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            if (themeFormModal.style.display === 'block') {
-                hideModal();
-            } else if (themeDetailModal.style.display === 'block') {
+            if (addThemeModal.style.display === 'block') {
+                hideAddModal();
+            } else if (detailModal.style.display === 'block') {
                 hideDetailModal();
             }
         }
     });
 }
 
-// 显示模态框
-function showModal() {
-    themeFormModal.style.display = 'block';
-    themeTitleInput.focus();
-    document.body.style.overflow = 'hidden';
+// 筛选器点击事件处理
+function handleFilterClick() {
+    document.querySelectorAll('#status-filter .ant-radio-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            
+            // 移除所有按钮的active类
+            document.querySelectorAll('#status-filter .ant-radio-button').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // 为当前点击的按钮添加active类
+            this.classList.add('active');
+            
+            // 设置当前筛选
+            currentFilter = value;
+            
+            // 重新渲染主题列表
+            renderThemes();
+        });
+    });
 }
 
-// 隐藏模态框
-function hideModal() {
-    themeFormModal.style.display = 'none';
-    resetForm();
-    document.body.style.overflow = '';
+// 编辑主题按钮点击事件
+function setupEditButtonEvent() {
+    editThemeBtn.addEventListener('click', function() {
+        const theme = themes.find(t => t.id === currentThemeId);
+        if (theme) {
+            hideDetailModal();
+            editTheme(theme);
+        }
+    });
+}
+
+// 关闭详情按钮点击事件
+function setupCloseDetailButtonEvent() {
+    closeDetailBtn.addEventListener('click', hideDetailModal);
 }
 
 // 添加新主题
 async function addNewTheme() {
     const title = themeTitleInput.value.trim();
-    const description = themeDescriptionInput.value.trim();
     const status = themeStatusSelect.value;
-    const priority = '高'; // 默认优先级为高
+    const priority = themePrioritySelect.value;
     
     if (!title) return;
     
@@ -770,7 +733,7 @@ async function updateTheme() {
         themeTitleInput.value.trim(),
         themeStatusSelect.value,
         getCurrentDate(),
-        '高' // 默认优先级为高
+        themePrioritySelect.value
     );
     
     try {
@@ -971,13 +934,13 @@ function showDetailModal(id) {
         </div>
     `;
     
-    themeDetailModal.style.display = 'block';
+    detailModal.style.display = 'block';
     document.body.style.overflow = 'hidden';
 }
 
 // 隐藏详情模态框
 function hideDetailModal() {
-    themeDetailModal.style.display = 'none';
+    detailModal.style.display = 'none';
     document.body.style.overflow = '';
     currentThemeId = null;
 }
@@ -988,13 +951,31 @@ function editTheme(theme) {
     
     isEditing = true;
     editingThemeId = theme.id;
-    modalTitle.textContent = '编辑主题';
-    
-    // 填充表单数据
     themeTitleInput.value = theme.mainTheme || '';
     themeStatusSelect.value = theme.completionStatus || '已完成';
-    
-    showModal();
+    themePrioritySelect.value = theme.priority || '低';
+    showAddModal();
+}
+
+// 重置表单
+function resetForm() {
+    themeTitleInput.value = '';
+    themeStatusSelect.value = '已完成';
+    themePrioritySelect.value = '低';
+}
+
+// 显示添加/编辑主题模态框
+function showAddModal() {
+    addThemeModal.style.display = 'block';
+    themeTitleInput.focus();
+    document.body.style.overflow = 'hidden';
+}
+
+// 隐藏添加/编辑主题模态框
+function hideAddModal() {
+    addThemeModal.style.display = 'none';
+    resetForm();
+    document.body.style.overflow = '';
 }
 
 // 初始化应用

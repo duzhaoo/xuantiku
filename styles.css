@@ -17,6 +17,12 @@
     --shadow-color: rgba(0, 0, 0, 0.08);
     --header-blur-background: rgba(255, 255, 255, 0.8);
     
+    /* 状态颜色 */
+    --status-pending: #FF9F0A;    /* 待开始：橙色（警告色） */
+    --status-in-progress: #007AFF; /* 进行中：蓝色（主色） */
+    --status-published: #AF52DE;  /* 已发布：紫色 */
+    --status-completed: #34C759;  /* 已完成：绿色（成功色） */
+    
     /* 尺寸变量 */
     --border-radius-base: 12px;  /* Things 3风格的更大圆角 */
     --border-radius-sm: 8px;
@@ -66,6 +72,7 @@ body {
     position: relative;
     overflow: hidden;
     border: none;
+    border-left: 3px solid transparent; /* 默认透明边框 */
 }
 
 .theme-item:hover {
@@ -79,7 +86,29 @@ body {
 }
 
 .theme-item.high-priority {
-    border-left: 3px solid var(--primary-color);  /* 重要任务指示器 */
+    border-left-color: var(--error-color);
+}
+
+/* 根据状态设置左侧边框颜色 */
+.theme-item[data-status="待开始"] {
+    border-left-color: var(--status-pending);
+}
+
+.theme-item[data-status="进行中"] {
+    border-left-color: var(--status-in-progress);
+}
+
+.theme-item[data-status="已发布"] {
+    border-left-color: var(--status-published);
+}
+
+.theme-item[data-status="已完成"] {
+    border-left-color: var(--status-completed);
+}
+
+/* 当主题同时是高优先级且有状态时，优先级颜色优先 */
+.theme-item.high-priority[data-status] {
+    border-left-color: var(--error-color);
 }
 
 .theme-content {
@@ -127,14 +156,28 @@ body {
     color: var(--text-color-secondary);
 }
 
-.status.completed {
-    background-color: rgba(52, 199, 89, 0.1);  /* 半透明绿色背景 */
-    color: var(--success-color);
+/* 待开始状态 */
+.status.pending {
+    background-color: rgba(255, 159, 10, 0.1);
+    color: var(--status-pending);
 }
 
+/* 进行中状态 */
+.status.in-progress {
+    background-color: rgba(0, 122, 255, 0.1);
+    color: var(--status-in-progress);
+}
+
+/* 已发布状态 */
 .status.published {
-    background-color: rgba(0, 122, 255, 0.1);  /* 半透明蓝色背景 */
-    color: var(--primary-color);
+    background-color: rgba(175, 82, 222, 0.1);
+    color: var(--status-published);
+}
+
+/* 已完成状态 */
+.status.completed {
+    background-color: rgba(52, 199, 89, 0.1);
+    color: var(--status-completed);
 }
 
 /* 优先级标签 */
@@ -204,13 +247,25 @@ body {
     letter-spacing: -0.02em;
 }
 
-/* 页面头部 */
+/* 应用标题样式 */
+.app-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--heading-color);
+    margin: 20px 0;
+    padding: 0;
+    letter-spacing: -0.02em;
+}
+
+/* 页面头部样式 */
 .page-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 24px;
-    padding: 0 20px;
+    justify-content: center;
+    padding: 16px 24px;
+    margin-bottom: 20px;
 }
 
 .page-title {

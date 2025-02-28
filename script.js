@@ -877,6 +877,7 @@ function renderThemes() {
             themeItem.classList.add('high-priority');
         }
         themeItem.dataset.id = theme.id;
+        themeItem.dataset.status = theme.completionStatus; // 添加状态属性
         
         themeItem.innerHTML = `
             <div class="theme-content">
@@ -886,7 +887,7 @@ function renderThemes() {
                     </div>
                 </div>
                 <div class="theme-meta">
-                    <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
+                    <span class="status ${getStatusClass(theme.completionStatus)}">${theme.completionStatus || '待处理'}</span>
                     <span class="priority ${theme.priority === '高' ? 'high' : ''} ${theme.priority === '低' ? 'low' : ''}">${theme.priority || '低'}</span>
                 </div>
             </div>
@@ -903,6 +904,22 @@ function renderThemes() {
     console.log('渲染完成，列表项数:', themesList.children.length);
 }
 
+// 获取状态对应的CSS类
+function getStatusClass(status) {
+    switch(status) {
+        case '待开始':
+            return 'pending';
+        case '进行中':
+            return 'in-progress';
+        case '已发布':
+            return 'published';
+        case '已完成':
+            return 'completed';
+        default:
+            return '';
+    }
+}
+
 // 显示详情模态框
 function showDetailModal(id) {
     const theme = themes.find(t => t.id === id);
@@ -916,7 +933,7 @@ function showDetailModal(id) {
         <div class="detail-item">
             <div class="detail-label">状态</div>
             <div class="detail-value">
-                <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
+                <span class="status ${getStatusClass(theme.completionStatus)}">${theme.completionStatus || '待处理'}</span>
             </div>
         </div>
         <div class="detail-item">

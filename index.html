@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HD协同</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- PWA相关元标签 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4a6cf7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HD协同">
+    
+    <!-- 针对iOS设备的图标 -->
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-152x152.png">
+    
+    <!-- 针对Safari的启动屏幕图像 -->
+    <link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
+</head>
+<body>
+    <div class="app-container">
+       
+        
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">HD协同</div>
+                <button id="new-theme-btn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 新建主题
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="filter-container">
+                        
+                        <div class="ant-radio-group">
+                            <label class="ant-radio-button active" data-status="all">
+                                <input type="radio" name="status" checked>
+                                <span>全部</span>
+                            </label>
+                            <label class="ant-radio-button" data-status="待开始">
+                                <input type="radio" name="status">
+                                <span>待开始</span>
+                            </label>
+                            <label class="ant-radio-button" data-status="进行中">
+                                <input type="radio" name="status">
+                                <span>进行中</span>
+                            </label>
+                            <label class="ant-radio-button" data-status="已发布">
+                                <input type="radio" name="status">
+                                <span>已发布</span>
+                            </label>
+                            <label class="ant-radio-button" data-status="已完成">
+                                <input type="radio" name="status">
+                                <span>已完成</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="themes-list" class="themes-list">
+                        <!-- 主题将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <div id="theme-form-modal" class="ant-modal">
+            <div class="ant-modal-mask"></div>
+            <div class="ant-modal-wrap">
+                <div class="ant-modal-content">
+                    <div class="ant-modal-header">
+                        <div class="ant-modal-title" id="modal-title">创建新主题</div>
+                        <button id="close-modal-btn" class="ant-modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="ant-modal-body">
+                        <form id="new-theme-form" class="ant-form">
+                            <div class="ant-form-item">
+                                <label for="theme-title" class="ant-form-label">标题</label>
+                                <div class="ant-form-control">
+                                    <input type="text" id="theme-title" class="ant-input" placeholder="请输入主题标题" required>
+                                </div>
+                            </div>
+                            <div class="ant-form-item">
+                                <label for="theme-description" class="ant-form-label">描述</label>
+                                <div class="ant-form-control">
+                                    <textarea id="theme-description" class="ant-input" rows="3" placeholder="请输入主题描述"></textarea>
+                                </div>
+                            </div>
+                            <div class="ant-form-item">
+                                <label for="theme-status" class="ant-form-label">状态</label>
+                                <div class="ant-form-control">
+                                    <select id="theme-status" class="ant-select">
+                                        <option value="待开始">待开始</option>
+                                        <option value="进行中">进行中</option>
+                                        <option value="已发布">已发布</option>
+                                        <option value="已完成">已完成</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="ant-modal-footer">
+                        <button type="button" id="cancel-btn" class="btn btn-default">取消</button>
+                        <button type="submit" id="submit-btn" class="btn btn-primary">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加详情模态框 -->
+        <div id="theme-detail-modal" class="ant-modal">
+            <div class="ant-modal-mask"></div>
+            <div class="ant-modal-wrap">
+                <div class="ant-modal-content">
+                    <div class="ant-modal-header">
+                        <div class="ant-modal-title" id="detail-title">主题详情</div>
+                        <button id="close-detail-modal-btn" class="ant-modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="ant-modal-body">
+                        <div id="theme-detail-content">
+                            <!-- 详情内容将通过JavaScript动态添加 -->
+                        </div>
+                    </div>
+                    <div class="ant-modal-footer">
+                        <button type="button" id="edit-theme-btn" class="btn btn-default">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button type="button" id="delete-theme-btn" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> 删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 应用安装提示 -->
+        <div id="install-prompt" class="install-prompt" style="display: none;">
+            <div class="install-prompt-content">
+                <p><i class="fas fa-mobile-alt"></i> 将HD协同添加到主屏幕，随时访问</p>
+                <div class="install-actions">
+                    <button id="install-btn" class="btn btn-primary">安装应用</button>
+                    <button id="dismiss-install" class="btn btn-text">稍后再说</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 离线通知 -->
+        <div id="offline-notification" class="offline-notification" style="display: none;">
+            <i class="fas fa-wifi-slash"></i> 您当前处于离线状态，部分功能可能不可用
+        </div>
+        
+        <script src="idb-helper.js"></script>
+        <script src="script.js"></script>
+        
+        <!-- 注册Service Worker -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log('Service Worker 注册成功:', registration.scope);
+                        })
+                        .catch(error => {
+                            console.error('Service Worker 注册失败:', error);
+                        });
+                });
+            }
+            
+            // 监听在线/离线状态
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            
+            function updateOnlineStatus() {
+                const offlineNotification = document.getElementById('offline-notification');
+                if (navigator.onLine) {
+                    offlineNotification.style.display = 'none';
+                    // 尝试同步数据
+                    if (navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.sync.register('sync-themes')
+                                .catch(err => console.error('后台同步注册失败:', err));
+                        });
+                    }
+                } else {
+                    offlineNotification.style.display = 'block';
+                }
+            }
+            
+            // 处理应用安装
+            let deferredPrompt;
+            const installPrompt = document.getElementById('install-prompt');
+            const installBtn = document.getElementById('install-btn');
+            const dismissBtn = document.getElementById('dismiss-install');
+            
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // 阻止Chrome 67及更早版本自动显示安装提示
+                e.preventDefault();
+                // 存储事件，以便稍后触发
+                deferredPrompt = e;
+                // 显示自定义安装提示
+                installPrompt.style.display = 'block';
+            });
+            
+            installBtn.addEventListener('click', () => {
+                // 隐藏安装提示
+                installPrompt.style.display = 'none';
+                // 显示安装提示
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    // 等待用户响应提示
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('用户接受安装');
+                        } else {
+                            console.log('用户拒绝安装');
+                        }
+                        // 清除保存的提示，因为它只能使用一次
+                        deferredPrompt = null;
+                    });
+                }
+            });
+            
+            dismissBtn.addEventListener('click', () => {
+                // 隐藏安装提示
+                installPrompt.style.display = 'none';
+            });
+            
+            // 检查应用是否已安装
+            window.addEventListener('appinstalled', (evt) => {
+                console.log('应用已安装');
+                // 隐藏安装提示
+                installPrompt.style.display = 'none';
+            });
+            
+            // 初始检查在线状态
+            updateOnlineStatus();
+        </script>
+    </div>
+</body>
+</html>

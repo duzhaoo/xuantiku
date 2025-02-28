@@ -8,6 +8,26 @@ const FEISHU_CONFIG = {
     API_BASE_URL: window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api'
 };
 
+// 主题数据结构
+class Theme {
+    constructor(id, mainTheme, completionStatus, additionTime, priority) {
+        this.id = id;
+        this.mainTheme = mainTheme;          // 主题
+        this.completionStatus = completionStatus || "已完成";  // 完成状态：已发布、已完成等
+        this.additionTime = additionTime || getCurrentDate();  // 添加时间，格式：YYYY/MM/DD
+        this.priority = priority || "低";     // 优先级：高、低
+    }
+}
+
+// 获取当前日期，格式化为 YYYY/MM/DD
+function getCurrentDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
+}
+
 // 存储主题的数组
 let themes = [];
 let currentFilter = 'all';
@@ -54,6 +74,61 @@ const deleteThemeBtn = document.getElementById('delete-theme-btn');
 const detailTitle = document.getElementById('detail-title');
 
 let currentThemeId = null;
+
+// PWA安装相关逻辑
+let deferredPrompt;
+const installButton = document.createElement('button');
+installButton.style.position = 'fixed';
+installButton.style.bottom = '20px';
+installButton.style.right = '20px';
+installButton.style.padding = '10px 15px';
+installButton.style.background = '#4a6cf7';
+installButton.style.color = 'white';
+installButton.style.border = 'none';
+installButton.style.borderRadius = '5px';
+installButton.style.fontWeight = 'bold';
+installButton.style.cursor = 'pointer';
+installButton.style.zIndex = '1000';
+installButton.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+installButton.textContent = '安装应用';
+installButton.style.display = 'none';
+document.body.appendChild(installButton);
+
+// 监听beforeinstallprompt事件
+window.addEventListener('beforeinstallprompt', (e) => {
+  // 阻止Chrome 67及更早版本自动显示安装提示
+  e.preventDefault();
+  // 保存事件，以便稍后触发
+  deferredPrompt = e;
+  // 显示安装按钮
+  installButton.style.display = 'block';
+});
+
+// 当用户点击安装按钮时触发安装流程
+installButton.addEventListener('click', async () => {
+  if (!deferredPrompt) {
+    // 提示用户手动安装
+    alert('要安装此应用，请点击浏览器菜单，然后选择"添加到主屏幕"或"安装应用"选项');
+    return;
+  }
+  
+  // 显示安装提示
+  deferredPrompt.prompt();
+  // 等待用户响应
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`用户安装选择结果: ${outcome}`);
+  // 无论结果如何，清除保存的提示，因为它只能使用一次
+  deferredPrompt = null;
+  // 隐藏按钮
+  installButton.style.display = 'none';
+});
+
+// 监听应用安装完成事件
+window.addEventListener('appinstalled', (e) => {
+  console.log('应用已成功安装');
+  // 隐藏安装按钮
+  installButton.style.display = 'none';
+});
 
 // 初始化应用
 async function init() {
@@ -306,13 +381,13 @@ async function fetchThemes() {
                 }
             }
             
-            return {
-                id: item.record_id,
-                title: fields.title || fields.名称 || fields.主题 || '无标题',
-                description: fields.description || fields.描述 || fields.内容 || '',
-                status: status,
-                createdAt: fields.created_at || fields.创建时间 || new Date().toISOString()
-            };
+            return new Theme(
+                item.record_id,
+                fields.title || fields.主题 || '无标题',
+                status,
+                fields.additionTime || fields.添加时间 || getCurrentDate(),
+                fields.priority || fields.优先级 || '低'
+            );
         });
         
         console.log('成功获取主题数据，共', themes.length, '条');
@@ -334,21 +409,17 @@ async function createThemeInFeishu(theme) {
         const fields = {};
         
         // 尝试多种可能的字段名
-        fields.title = theme.title;
-        fields.名称 = theme.title;
-        fields.主题 = theme.title;
+        fields.title = theme.mainTheme;
+        fields.主题 = theme.mainTheme;
         
-        if (theme.description) {
-            fields.description = theme.description;
-            fields.描述 = theme.description;
-            fields.内容 = theme.description;
-        }
+        fields.status = theme.completionStatus;
+        fields.状态 = theme.completionStatus;
         
-        fields.status = theme.status;
-        fields.状态 = theme.status;
+        fields.additionTime = theme.additionTime;
+        fields.添加时间 = theme.additionTime;
         
-        fields.created_at = theme.createdAt;
-        fields.创建时间 = theme.createdAt;
+        fields.priority = theme.priority;
+        fields.优先级 = theme.priority;
         
         const response = await fetch(url, {
             method: 'POST',
@@ -387,18 +458,17 @@ async function updateThemeInFeishu(id, updatedTheme) {
         // 构建字段映射
         const fields = {};
         
-        fields.title = updatedTheme.title;
-        fields.名称 = updatedTheme.title;
-        fields.主题 = updatedTheme.title;
+        fields.title = updatedTheme.mainTheme;
+        fields.主题 = updatedTheme.mainTheme;
         
-        if (updatedTheme.description) {
-            fields.description = updatedTheme.description;
-            fields.描述 = updatedTheme.description;
-            fields.内容 = updatedTheme.description;
-        }
+        fields.status = updatedTheme.completionStatus;
+        fields.状态 = updatedTheme.completionStatus;
         
-        fields.status = updatedTheme.status;
-        fields.状态 = updatedTheme.status;
+        fields.additionTime = updatedTheme.additionTime;
+        fields.添加时间 = updatedTheme.additionTime;
+        
+        fields.priority = updatedTheme.priority;
+        fields.优先级 = updatedTheme.priority;
         
         const response = await fetch(url, {
             method: 'PUT',
@@ -567,15 +637,17 @@ async function addNewTheme() {
     const title = themeTitleInput.value.trim();
     const description = themeDescriptionInput.value.trim();
     const status = themeStatusSelect.value;
+    const priority = '高'; // 默认优先级为高
     
     if (!title) return;
     
-    const newTheme = {
+    const newTheme = new Theme(
+        null,
         title,
-        description,
         status,
-        createdAt: new Date().toISOString()
-    };
+        getCurrentDate(),
+        priority
+    );
     
     try {
         if (accessToken) {
@@ -616,11 +688,13 @@ async function updateTheme() {
     const themeIndex = themes.findIndex(t => t.id === editingThemeId);
     if (themeIndex === -1) return;
     
-    const updatedTheme = {
-        title: themeTitleInput.value.trim(),
-        description: themeDescriptionInput.value.trim(),
-        status: themeStatusSelect.value
-    };
+    const updatedTheme = new Theme(
+        editingThemeId,
+        themeTitleInput.value.trim(),
+        themeStatusSelect.value,
+        getCurrentDate(),
+        '高' // 默认优先级为高
+    );
     
     try {
         if (accessToken) {
@@ -629,9 +703,7 @@ async function updateTheme() {
         }
         
         // 更新本地数组
-        themes[themeIndex].title = updatedTheme.title;
-        themes[themeIndex].description = updatedTheme.description;
-        themes[themeIndex].status = updatedTheme.status;
+        themes[themeIndex] = updatedTheme;
         
         // 保存到IndexedDB
         await saveThemesToIndexedDB(themes);
@@ -643,9 +715,7 @@ async function updateTheme() {
         console.error('更新主题失败:', error);
         
         // 如果飞书API失败，使用本地存储
-        themes[themeIndex].title = updatedTheme.title;
-        themes[themeIndex].description = updatedTheme.description;
-        themes[themeIndex].status = updatedTheme.status;
+        themes[themeIndex] = updatedTheme;
         await saveThemesToIndexedDB(themes);
         renderThemes();
         isEditing = false;
@@ -661,7 +731,7 @@ async function deleteTheme(id) {
     
     if (themeIndex === -1) return;
     
-    if (confirm(`确定要删除"${themes[themeIndex].title}"吗？`)) {
+    if (confirm(`确定要删除"${themes[themeIndex].mainTheme}"吗？`)) {
         try {
             if (accessToken) {
                 // 如果有访问令牌，尝试从飞书删除
@@ -737,7 +807,7 @@ function renderThemes() {
     
     const filteredThemes = currentFilter === 'all' 
         ? themes 
-        : themes.filter(theme => theme.status === currentFilter);
+        : themes.filter(theme => theme.completionStatus === currentFilter);
     
     if (filteredThemes.length === 0) {
         themesList.innerHTML = '<div class="no-themes">暂无相关主题</div>';
@@ -753,8 +823,8 @@ function renderThemes() {
             <div class="theme-content">
                 <div class="theme-main">
                     <div class="theme-header">
-                        <div class="theme-title">${theme.title}</div>
-                        <div class="theme-status status-${theme.status}">${theme.status}</div>
+                        <div class="theme-title">${theme.mainTheme}</div>
+                        <div class="theme-status status-${theme.completionStatus}">${theme.completionStatus}</div>
                     </div>
                 </div>
             </div>
@@ -775,7 +845,7 @@ function showDetailModal(id) {
     if (!theme) return;
     
     currentThemeId = id;
-    detailTitle.textContent = theme.title;
+    detailTitle.textContent = theme.mainTheme;
     
     // 构建详情内容
     const descriptionHtml = theme.description 
@@ -788,20 +858,24 @@ function showDetailModal(id) {
         : '';
     
     // 格式化日期
-    const createdDate = new Date(theme.createdAt);
+    const createdDate = new Date(theme.additionTime);
     const formattedDate = `${createdDate.getFullYear()}-${(createdDate.getMonth()+1).toString().padStart(2, '0')}-${createdDate.getDate().toString().padStart(2, '0')}`;
     
     themeDetailContent.innerHTML = `
         <div class="detail-item">
             <div class="detail-label">状态</div>
             <div class="detail-value">
-                <span class="detail-status status-${theme.status}">${theme.status}</span>
+                <span class="detail-status status-${theme.completionStatus}">${theme.completionStatus}</span>
             </div>
         </div>
         ${descriptionHtml}
         <div class="detail-item">
-            <div class="detail-label">创建时间</div>
+            <div class="detail-label">添加时间</div>
             <div class="detail-value">${formattedDate}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">优先级</div>
+            <div class="detail-value">${theme.priority}</div>
         </div>
     `;
     
@@ -827,9 +901,9 @@ function editTheme(id) {
     modalTitle.textContent = '编辑主题';
     
     // 填充表单数据
-    themeTitleInput.value = theme.title;
+    themeTitleInput.value = theme.mainTheme;
     themeDescriptionInput.value = theme.description || '';
-    themeStatusSelect.value = theme.status;
+    themeStatusSelect.value = theme.completionStatus;
     
     showModal();
 }

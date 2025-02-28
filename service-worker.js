@@ -7,197 +7,155 @@ const urlsToCache = [
   '/index.html',
   '/styles.css',
   '/script.js',
+  '/idb-helper.js',
   '/manifest.json',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
+  '/favicon.ico',
+  // 只列出确实存在的图标
   '/icons/icon-512x512.png',
+  '/icons/icon-96x96.png',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'
 ];
 
-// 安装 Service Worker 并缓存资源
+// 安装事件：缓存资源
 self.addEventListener('install', event => {
-  console.log('安装 Service Worker');
+  console.log('[Service Worker] Install');
+  // 确保Service Worker不会被旧的Service Worker替代，直到缓存完成
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('打开缓存');
+        console.log('[Service Worker] Caching all resources');
         return cache.addAll(urlsToCache);
       })
-      .then(() => self.skipWaiting()) // 让新的 Service Worker 立即激活
+      .then(() => {
+        console.log('[Service Worker] Successfully cached resources');
+        return self.skipWaiting();
+      })
   );
 });
 
-// 激活 Service Worker 并清除旧缓存
+// 激活事件：清理旧缓存
 self.addEventListener('activate', event => {
-  console.log('激活 Service Worker');
+  console.log('[Service Worker] Activate');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.filter(cacheName => {
-          return cacheName !== CACHE_NAME;
-        }).map(cacheName => {
-          console.log('删除旧缓存:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-    }).then(() => self.clients.claim()) // 让 Service Worker 立即控制所有客户端
+    caches.keys().then(keyList => {
+      return Promise.all(keyList.map(key => {
+        if (key !== CACHE_NAME) {
+          console.log('[Service Worker] Removing old cache', key);
+          return caches.delete(key);
+        }
+      }));
+    }).then(() => {
+      console.log('[Service Worker] Claiming clients');
+      return self.clients.claim();
+    })
   );
 });
 
-// 处理请求
+// 请求拦截：缓存优先策略
 self.addEventListener('fetch', event => {
-  // 排除飞书 API 请求，仅缓存静态资源和 HTML
-  if (event.request.url.includes('/api/') && !event.request.url.endsWith('.html')) {
+  // 排除对API的请求，让它们直接通过网络
+  if (event.request.url.includes('/api/')) {
     return;
   }
-  
+
   event.respondWith(
-    // 尝试从缓存中返回
     caches.match(event.request)
-      .then(response => {
-        // 找到缓存，返回缓存的响应
-        if (response) {
-          return response;
+      .then(cachedResponse => {
+        // 如果在缓存中找到匹配的响应，则返回缓存的版本
+        if (cachedResponse) {
+          console.log('[Service Worker] Return cached resource', event.request.url);
+          return cachedResponse;
         }
-        
-        // 未找到缓存，发起网络请求
+
+        // 如果缓存中没有响应，则尝试从网络获取
+        console.log('[Service Worker] Network request for', event.request.url);
         return fetch(event.request)
           .then(response => {
-            // 检查响应是否有效
+            // 检查是否得到了有效的响应
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-            
-            // 缓存获取的响应（需要克隆，因为响应流只能使用一次）
-            const responseToCache = response.clone();
+
+            // 克隆响应，因为响应流只能使用一次
+            var responseToCache = response.clone();
+
             caches.open(CACHE_NAME)
               .then(cache => {
+                console.log('[Service Worker] Caching new resource', event.request.url);
                 cache.put(event.request, responseToCache);
               });
-            
+
             return response;
-          })
-          .catch(error => {
-            console.error('获取资源失败:', error);
-            
-            // 对于导航请求（如页面加载），返回离线页面
-            if (event.request.mode === 'navigate') {
-              return caches.match('/index.html');
-            }
-            
-            // 其他请求返回错误
-            return new Response('网络连接失败，无法加载资源。', {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: new Headers({
-                'Content-Type': 'text/plain'
-              })
-            });
           });
+      }).catch(() => {
+        // 如果网络请求失败且没有缓存，则返回离线页面
+        console.log('[Service Worker] Fetch failed, returning offline page');
+        if (event.request.mode === 'navigate') {
+          return caches.match('/index.html');
+        }
       })
   );
 });
 
-// 后台同步
+// 处理后台同步
 self.addEventListener('sync', event => {
+  console.log('[Service Worker] Background Sync', event.tag);
   if (event.tag === 'sync-themes') {
     event.waitUntil(syncThemes());
   }
 });
 
-// 实现后台同步函数
+// 同步主题数据
 async function syncThemes() {
   try {
-    // 从 IndexedDB 获取待同步的主题
     const themesToSync = await getThemesToSync();
     
-    if (themesToSync.length === 0) {
-      return;
-    }
-    
-    // 获取访问令牌
-    const tokenResponse = await fetch('/api/get-feishu-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
+    for (const theme of themesToSync) {
+      // 根据操作类型同步数据
+      if (theme.syncAction === 'create') {
+        await createThemeOnServer(theme);
+      } else if (theme.syncAction === 'update') {
+        await updateThemeOnServer(theme);
+      } else if (theme.syncAction === 'delete') {
+        await deleteThemeOnServer(theme.id);
       }
-    });
-    
-    if (!tokenResponse.ok) {
-      throw new Error('获取访问令牌失败');
-    }
-    
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.tenant_access_token;
-    
-    // 处理每个待同步的主题
-    for (const themeData of themesToSync) {
-      const { theme, action, id } = themeData;
       
-      switch (action) {
-        case 'create':
-          await createThemeInFeishu(theme, accessToken);
-          break;
-        case 'update':
-          await updateThemeInFeishu(id, theme, accessToken);
-          break;
-        case 'delete':
-          await deleteThemeFromFeishu(id, accessToken);
-          break;
-      }
+      // 同步成功后更新本地数据状态
+      await markThemeAsSynced(theme.id);
     }
     
-    // 清除已同步的主题
-    await clearSyncedThemes();
-    
-    // 通知客户端同步完成
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'sync-complete',
-        success: true
-      });
-    });
-    
+    console.log('[Service Worker] Themes synchronized successfully');
+    return true;
   } catch (error) {
-    console.error('同步主题失败:', error);
-    
-    // 通知客户端同步失败
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'sync-complete',
-        success: false,
-        error: error.message
-      });
-    });
+    console.error('[Service Worker] Sync failed:', error);
+    return false;
   }
 }
 
-// 这些函数需要在主 JS 文件中实现并且与 Service Worker 通信
-// 这里仅作为占位符
+// 以下函数为待实现的辅助函数，应当根据实际情况来实现
 async function getThemesToSync() {
+  // 这里应该实现获取需要同步的主题
+  // 从IndexedDB获取带有syncPending标记的主题
   return [];
 }
 
-async function clearSyncedThemes() {
-  return;
+async function markThemeAsSynced(themeId) {
+  // 这里应该实现将主题标记为已同步
+  console.log('[Service Worker] Marked theme as synced:', themeId);
 }
 
-async function createThemeInFeishu(theme, token) {
-  return;
+async function createThemeOnServer(theme) {
+  // 实现创建主题到服务器的逻辑
+  console.log('[Service Worker] Create theme on server:', theme);
 }
 
-async function updateThemeInFeishu(id, theme, token) {
-  return;
+async function updateThemeOnServer(theme) {
+  // 实现更新服务器上主题的逻辑
+  console.log('[Service Worker] Update theme on server:', theme);
 }
 
-async function deleteThemeFromFeishu(id, token) {
-  return;
+async function deleteThemeOnServer(themeId) {
+  // 实现从服务器删除主题的逻辑
+  console.log('[Service Worker] Delete theme from server:', themeId);
 }

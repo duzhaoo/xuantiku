@@ -12,6 +12,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4a6cf7">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HD协同">
     
@@ -162,22 +163,40 @@
         
         <script src="idb-helper.js"></script>
         <script src="script.js"></script>
-        
-        <!-- 注册Service Worker -->
         <script>
+            // 注册 Service Worker
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('/service-worker.js')
-                        .then(registration => {
-                            console.log('Service Worker 注册成功:', registration.scope);
-                        })
-                        .catch(error => {
-                            console.error('Service Worker 注册失败:', error);
-                        });
+                window.addEventListener('load', async () => {
+                    try {
+                        const registration = await navigator.serviceWorker.register('/service-worker.js');
+                        console.log('Service Worker 注册成功:', registration.scope);
+
+                        // 确保Service Worker激活
+                        if (registration.active) {
+                            console.log('Service Worker 已激活');
+                        } else {
+                            console.log('等待Service Worker激活...');
+                            registration.onupdatefound = () => {
+                                const installingWorker = registration.installing;
+                                installingWorker.onstatechange = () => {
+                                    if (installingWorker.state === 'activated') {
+                                        console.log('Service Worker现在已激活');
+                                    }
+                                };
+                            };
+                        }
+
+                    } catch (error) {
+                        console.error('Service Worker 注册失败:', error);
+                    }
                 });
+            } else {
+                console.warn('浏览器不支持Service Worker');
             }
-            
-            // 监听在线/离线状态
+        </script>
+        
+        <!-- 监听在线/离线状态 -->
+        <script>
             window.addEventListener('online', updateOnlineStatus);
             window.addEventListener('offline', updateOnlineStatus);
             

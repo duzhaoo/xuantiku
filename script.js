@@ -39,6 +39,43 @@ function getCurrentDate() {
     return `${year}/${month}/${day}`;
 }
 
+// 格式化日期，支持时间戳或字符串
+function formatDate(dateValue) {
+    // 如果是时间戳（数字），转换为日期对象
+    let dateObj;
+    if (typeof dateValue === 'number') {
+        dateObj = new Date(dateValue);
+    } else if (dateValue instanceof Date) {
+        dateObj = dateValue;
+    } else if (typeof dateValue === 'string') {
+        // 尝试解析字符串日期
+        // 如果已经是YYYY/MM/DD格式，直接返回
+        if (/^\d{4}\/\d{2}\/\d{2}$/.test(dateValue)) {
+            return dateValue;
+        }
+        
+        // 尝试解析其他格式
+        const parsed = new Date(dateValue);
+        if (!isNaN(parsed.getTime())) {
+            dateObj = parsed;
+        } else {
+            // 无法解析的日期格式，返回当前日期
+            console.warn('无法解析的日期格式:', dateValue);
+            return getCurrentDate();
+        }
+    } else {
+        // 不支持的类型，返回当前日期
+        return getCurrentDate();
+    }
+    
+    // 格式化日期为YYYY/MM/DD
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    
+    return `${year}/${month}/${day}`;
+}
+
 // 存储主题的数组
 let themes = [];
 let currentFilter = 'all';
@@ -408,10 +445,12 @@ async function fetchThemes() {
             
             // 获取其他字段值，尝试不同的可能命名
             const title = fields.title || fields.主题 || fields.Title || '无标题';
-            const addTime = fields.additionTime || fields.添加时间 || fields.创建时间 || getCurrentDate();
+            const rawAddTime = fields.additionTime || fields.添加时间 || fields.创建时间 || getCurrentDate();
+            // 格式化添加时间，确保日期格式正确
+            const addTime = formatDate(rawAddTime);
             const priority = fields.priority || fields.优先级 || fields.Priority || '低';
             
-            console.log(`解析字段: 标题=${title}, 状态=${status}, 时间=${addTime}, 优先级=${priority}`);
+            console.log(`解析字段: 标题=${title}, 状态=${status}, 原始时间=${rawAddTime}, 格式化时间=${addTime}, 优先级=${priority}`);
             
             return new Theme(
                 item.record_id,
@@ -884,7 +923,7 @@ function renderThemes() {
                     </div>
                     <div class="theme-meta">
                         <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
-                        <span class="date">${theme.additionTime || ''}</span>
+                        <span class="date">${formatDate(theme.additionTime) || ''}</span>
                         <span class="priority ${theme.priority === '高' ? 'high' : ''} ${theme.priority === '低' ? 'low' : ''}">${theme.priority || '低'}</span>
                     </div>
                 </div>
@@ -911,21 +950,7 @@ function showDetailModal(id) {
     detailTitle.textContent = theme.mainTheme || '无标题';
     
     // 构建详情内容
-    let formattedDate = theme.additionTime || '';
-    
-    // 确保日期格式正确
-    if (formattedDate && formattedDate.includes('/')) {
-        // 已经是YYYY/MM/DD格式，保持不变
-    } else if (formattedDate) {
-        try {
-            const dateObj = new Date(formattedDate);
-            if (!isNaN(dateObj.getTime())) {
-                formattedDate = `${dateObj.getFullYear()}/${String(dateObj.getMonth()+1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
-            }
-        } catch (e) {
-            console.error('日期格式化错误:', e);
-        }
-    }
+    let formattedDate = formatDate(theme.additionTime);
     
     themeDetailContent.innerHTML = `
         <div class="detail-item">

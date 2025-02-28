@@ -217,11 +217,24 @@ body {
 .filter-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 24px;
     padding: 12px 20px;
     background-color: var(--component-background);
     border-radius: var(--border-radius-base);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    flex-wrap: wrap; /* 在小屏幕上允许换行 */
+    gap: 16px; /* 筛选组之间的间距 */
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    min-width: 280px; /* 确保筛选器有足够宽度 */
+}
+
+.priority-filter {
+    margin-left: auto; /* 将优先级筛选推到最右侧 */
 }
 
 .filter-title {
@@ -229,6 +242,24 @@ body {
     margin-right: 12px;
     color: var(--text-color);
     font-size: var(--font-size-base);
+    white-space: nowrap; /* 防止标题换行 */
+}
+
+/* 移动设备适配 */
+@media (max-width: 768px) {
+    .filter-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-group {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .priority-filter {
+        margin-left: 0;
+    }
 }
 
 /* Radio按钮组 - 类似iOS分段控制器 */
@@ -238,6 +269,7 @@ body {
     border-radius: 10px;
     padding: 4px;
     gap: 4px;
+    flex-wrap: wrap; /* 在宽度不足时允许换行 */
 }
 
 .ant-radio-button {
@@ -252,6 +284,7 @@ body {
     background: transparent;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap; /* 防止按钮文字换行 */
 }
 
 .ant-radio-button input {
@@ -266,6 +299,75 @@ body {
 
 .ant-radio-button:hover:not(.active) {
     background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* 不同优先级的样式 */
+#priority-filter .ant-radio-button[data-value="高"].active {
+    color: var(--error-color);
+}
+
+#priority-filter .ant-radio-button[data-value="中"].active {
+    color: var(--warning-color);
+}
+
+#priority-filter .ant-radio-button[data-value="低"].active {
+    color: var(--success-color);
+}
+
+/* 按钮样式 - 更像Things 3和iOS的按钮 */
+.btn {
+    padding: 0 20px;
+    height: var(--height-base);
+    border-radius: 18px;  /* 半圆形按钮 */
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+    border: none;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    gap: 6px;
+}
+
+.btn i {
+    font-size: 16px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-color-hover);
+}
+
+.btn-primary:active {
+    background-color: var(--primary-color-active);
+}
+
+.btn-default {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+}
+
+.btn-default:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.btn-default:active {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.btn-text {
+    background: transparent;
+    color: var(--primary-color);
+}
+
+.btn-text:hover {
+    text-decoration: underline;
 }
 
 /* 模态框 */
@@ -439,60 +541,4 @@ body {
 .detail-value {
     color: var(--text-color);
     font-size: 16px;
-}
-
-/* 按钮样式 - 更像Things 3和iOS的按钮 */
-.btn {
-    padding: 0 20px;
-    height: var(--height-base);
-    border-radius: 18px;  /* 半圆形按钮 */
-    font-size: var(--font-size-base);
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
-    border: none;
-    cursor: pointer;
-    letter-spacing: -0.01em;
-    gap: 6px;
-}
-
-.btn i {
-    font-size: 16px;
-}
-
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: var(--primary-color-hover);
-}
-
-.btn-primary:active {
-    background-color: var(--primary-color-active);
-}
-
-.btn-default {
-    background-color: rgba(0, 0, 0, 0.05);
-    color: var(--text-color);
-}
-
-.btn-default:hover {
-    background-color: rgba(0, 0, 0, 0.08);
-}
-
-.btn-default:active {
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.btn-text {
-    background: transparent;
-    color: var(--primary-color);
-}
-
-.btn-text:hover {
-    text-decoration: underline;
 }

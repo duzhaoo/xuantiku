@@ -23,10 +23,17 @@ class Theme {
         }
         
         this.additionTime = additionTime || getCurrentDate();  // 添加时间，格式：YYYY/MM/DD
-        this.priority = priority || "低";     // 优先级：高、低
+        
+        // 确保优先级值在有效范围内
+        if (['高', '中', '低'].includes(priority)) {
+            this.priority = priority;
+        } else {
+            // 默认设为"中"
+            this.priority = "中";
+        }
         
         // 调试日志
-        console.log(`创建主题对象: id=${id}, 标题=${mainTheme}, 状态=${this.completionStatus}`);
+        console.log(`创建主题对象: id=${id}, 标题=${mainTheme}, 状态=${this.completionStatus}, 优先级=${this.priority}`);
     }
 }
 
@@ -79,6 +86,7 @@ function formatDate(dateValue) {
 // 存储主题的数组
 let themes = [];
 let currentFilter = 'all';
+let currentPriorityFilter = 'all'; // 新增优先级筛选变量
 let isEditing = false;
 let editingThemeId = null;
 let accessToken = null;
@@ -400,7 +408,30 @@ async function fetchThemes() {
             const rawAddTime = fields.additionTime || fields.添加时间 || fields.创建时间 || getCurrentDate();
             // 格式化添加时间，确保日期格式正确
             const addTime = formatDate(rawAddTime);
-            const priority = fields.priority || fields.优先级 || fields.Priority || '低';
+            
+            // 处理优先级
+            let priority = fields.priority || fields.优先级 || fields.Priority || '中';
+            // 标准化优先级值
+            if (typeof priority === 'string') {
+                priority = priority.trim();
+                // 将不同的优先级表述标准化为高、中、低
+                if (['高', '重要', 'high', 'important', 'urgent', '紧急'].some(term => 
+                    priority.toLowerCase().includes(term.toLowerCase()))) {
+                    priority = '高';
+                } else if (['中', 'medium', 'normal', '普通', '一般'].some(term => 
+                    priority.toLowerCase().includes(term.toLowerCase()))) {
+                    priority = '中';
+                } else if (['低', 'low', '不重要', 'minor'].some(term => 
+                    priority.toLowerCase().includes(term.toLowerCase()))) {
+                    priority = '低';
+                } else {
+                    // 默认优先级
+                    priority = '中';
+                }
+            } else {
+                // 如果优先级不是字符串，设为默认值
+                priority = '中';
+            }
             
             console.log(`解析字段: 标题=${title}, 状态=${status}, 原始时间=${rawAddTime}, 格式化时间=${addTime}, 优先级=${priority}`);
             
@@ -562,6 +593,9 @@ function setupEventListeners() {
     // 筛选器点击事件处理
     handleFilterClick();
     
+    // 优先级筛选器点击事件处理
+    handlePriorityFilterClick();
+    
     // 提交按钮点击事件
     confirmAddBtn.addEventListener('click', async function() {
         if (addThemeForm.checkValidity()) {
@@ -643,6 +677,29 @@ function handleFilterClick() {
             
             // 设置当前筛选
             currentFilter = value;
+            
+            // 重新渲染主题列表
+            renderThemes();
+        });
+    });
+}
+
+// 优先级筛选器点击事件处理
+function handlePriorityFilterClick() {
+    document.querySelectorAll('#priority-filter .ant-radio-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            
+            // 移除所有按钮的active类
+            document.querySelectorAll('#priority-filter .ant-radio-button').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // 为当前点击的按钮添加active类
+            this.classList.add('active');
+            
+            // 设置当前筛选
+            currentPriorityFilter = value;
             
             // 重新渲染主题列表
             renderThemes();
@@ -838,9 +895,9 @@ async function getThemesFromIndexedDB() {
 function renderThemes() {
     themesList.innerHTML = '';
     
-    console.log('当前筛选:', currentFilter);
+    console.log('当前状态筛选:', currentFilter);
+    console.log('当前优先级筛选:', currentPriorityFilter);
     console.log('当前主题数:', themes.length);
-    console.log('主题列表:', JSON.stringify(themes));
     
     // 确保themes是正确的数组
     if (!Array.isArray(themes)) {
@@ -848,22 +905,34 @@ function renderThemes() {
         themes = [];
     }
     
-    // 确保在"全部"标签下显示所有主题，其他标签下根据状态筛选
-    const filteredThemes = currentFilter === 'all' 
+    // 第1步：按状态筛选
+    const statusFilteredThemes = currentFilter === 'all' 
         ? [...themes] // 使用数组副本避免引用问题
         : themes.filter(theme => {
             console.log(`比较主题状态: "${theme.completionStatus}" vs "${currentFilter}"`);
             return theme.completionStatus === currentFilter;
         });
     
-    console.log('筛选后主题数:', filteredThemes.length);
+    console.log('状态筛选后主题数:', statusFilteredThemes.length);
     
-    if (filteredThemes.length === 0) {
+    // 第2步：按优先级筛选
+    const finalFilteredThemes = currentPriorityFilter === 'all' 
+        ? [...statusFilteredThemes] 
+        : statusFilteredThemes.filter(theme => {
+            console.log(`比较主题优先级: "${theme.priority}" vs "${currentPriorityFilter}"`);
+            return theme.priority === currentPriorityFilter;
+        });
+    
+    console.log('最终筛选后主题数:', finalFilteredThemes.length);
+    
+    // 如果没有匹配的项目，显示提示
+    if (finalFilteredThemes.length === 0) {
         themesList.innerHTML = '<div class="no-themes">暂无相关主题</div>';
         return;
     }
     
-    filteredThemes.forEach(theme => {
+    // 渲染筛选后的主题
+    finalFilteredThemes.forEach(theme => {
         const themeItem = document.createElement('div');
         themeItem.className = 'theme-item';
         

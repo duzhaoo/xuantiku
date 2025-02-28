@@ -32,28 +32,52 @@
         <main class="main-content">
             
             <div class="filter-container">
-            
-                <div class="ant-radio-group" id="status-filter">
-                    <label class="ant-radio-button active" data-value="all">
-                        <input type="radio" name="status" value="all" checked>
-                        全部
-                    </label>
-                    <label class="ant-radio-button" data-value="待开始">
-                        <input type="radio" name="status" value="待开始">
-                        待开始
-                    </label>
-                    <label class="ant-radio-button" data-value="进行中">
-                        <input type="radio" name="status" value="进行中">
-                        进行中
-                    </label>
-                    <label class="ant-radio-button" data-value="已完成">
-                        <input type="radio" name="status" value="已完成">
-                        已完成
-                    </label>
-                    <label class="ant-radio-button" data-value="已发布">
-                        <input type="radio" name="status" value="已发布">
-                        已发布
-                    </label>
+                <div class="filter-group">
+                    <span class="filter-title">状态：</span>
+                    <div class="ant-radio-group" id="status-filter">
+                        <label class="ant-radio-button active" data-value="all">
+                            <input type="radio" name="status" value="all" checked>
+                            全部
+                        </label>
+                        <label class="ant-radio-button" data-value="待开始">
+                            <input type="radio" name="status" value="待开始">
+                            待开始
+                        </label>
+                        <label class="ant-radio-button" data-value="进行中">
+                            <input type="radio" name="status" value="进行中">
+                            进行中
+                        </label>
+                        <label class="ant-radio-button" data-value="已完成">
+                            <input type="radio" name="status" value="已完成">
+                            已完成
+                        </label>
+                        <label class="ant-radio-button" data-value="已发布">
+                            <input type="radio" name="status" value="已发布">
+                            已发布
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="filter-group priority-filter">
+                    <span class="filter-title">优先级：</span>
+                    <div class="ant-radio-group" id="priority-filter">
+                        <label class="ant-radio-button active" data-value="all">
+                            <input type="radio" name="priority" value="all" checked>
+                            全部
+                        </label>
+                        <label class="ant-radio-button" data-value="高">
+                            <input type="radio" name="priority" value="高">
+                            高
+                        </label>
+                        <label class="ant-radio-button" data-value="中">
+                            <input type="radio" name="priority" value="中">
+                            中
+                        </label>
+                        <label class="ant-radio-button" data-value="低">
+                            <input type="radio" name="priority" value="低">
+                            低
+                        </label>
+                    </div>
                 </div>
             </div>
             
@@ -85,7 +109,7 @@
                                 </div>
                             </div>
                             <div class="ant-form-item">
-                                <label class="ant-form-label">状态</label>
+                               
                                 <div class="ant-form-control">
                                     <select class="ant-select" id="theme-status">
                                         <option value="待开始">待开始</option>
@@ -96,7 +120,7 @@
                                 </div>
                             </div>
                             <div class="ant-form-item">
-                                <label class="ant-form-label">优先级</label>
+                            
                                 <div class="ant-form-control">
                                     <select class="ant-select" id="theme-priority">
                                         <option value="低">低</option>

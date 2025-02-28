@@ -17,10 +17,10 @@
     <meta name="apple-mobile-web-app-title" content="HD协同">
     
     <!-- 针对iOS设备的图标 -->
-    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" href="icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512x512.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="icons/icon-96x96.png">
     
     <!-- 针对Safari的启动屏幕图像 -->
     <link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
@@ -216,53 +216,31 @@
                 }
             }
             
-            // 处理应用安装
-            let deferredPrompt;
+            // 处理应用安装 - 仅初始化UI元素，变量在script.js中定义
             const installPrompt = document.getElementById('install-prompt');
             const installBtn = document.getElementById('install-btn');
             const dismissBtn = document.getElementById('dismiss-install');
-            
+        </script>
+        
+        <!-- 监听应用安装事件 -->
+        <script>
             window.addEventListener('beforeinstallprompt', (e) => {
                 // 阻止Chrome 67及更早版本自动显示安装提示
                 e.preventDefault();
-                // 存储事件，以便稍后触发
-                deferredPrompt = e;
-                // 显示自定义安装提示
-                installPrompt.style.display = 'block';
             });
-            
-            installBtn.addEventListener('click', () => {
-                // 隐藏安装提示
-                installPrompt.style.display = 'none';
-                // 显示安装提示
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    // 等待用户响应提示
-                    deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            console.log('用户接受安装');
-                        } else {
-                            console.log('用户拒绝安装');
-                        }
-                        // 清除保存的提示，因为它只能使用一次
-                        deferredPrompt = null;
-                    });
-                }
-            });
-            
-            dismissBtn.addEventListener('click', () => {
-                // 隐藏安装提示
-                installPrompt.style.display = 'none';
-            });
-            
-            // 检查应用是否已安装
+        </script>
+        
+        <!-- 检查应用是否已安装 -->
+        <script>
             window.addEventListener('appinstalled', (evt) => {
                 console.log('应用已安装');
                 // 隐藏安装提示
                 installPrompt.style.display = 'none';
             });
-            
-            // 初始检查在线状态
+        </script>
+        
+        <!-- 初始检查在线状态 -->
+        <script>
             updateOnlineStatus();
         </script>
     </div>

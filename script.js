@@ -873,11 +873,16 @@ function renderThemes() {
     filteredThemes.forEach(theme => {
         const themeItem = document.createElement('div');
         themeItem.className = 'theme-item';
+        
+        // 根据优先级和状态添加类名
         if (theme.priority === '高') {
             themeItem.classList.add('high-priority');
         }
+        
+        // 根据状态添加对应的类名
+        themeItem.classList.add('status-' + getStatusClass(theme.completionStatus));
+        
         themeItem.dataset.id = theme.id;
-        themeItem.dataset.status = theme.completionStatus; // 添加状态属性
         
         themeItem.innerHTML = `
             <div class="theme-content">
@@ -907,16 +912,11 @@ function renderThemes() {
 // 获取状态对应的CSS类
 function getStatusClass(status) {
     switch(status) {
-        case '待开始':
-            return 'pending';
-        case '进行中':
-            return 'in-progress';
-        case '已发布':
-            return 'published';
-        case '已完成':
-            return 'completed';
-        default:
-            return '';
+        case '待开始': return 'pending';
+        case '进行中': return 'in-progress';
+        case '已发布': return 'published';
+        case '已完成': return 'completed';
+        default: return '';
     }
 }
 

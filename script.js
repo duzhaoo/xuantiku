@@ -108,7 +108,6 @@ const themeStatusSelect = document.getElementById('theme-status');
 const themePrioritySelect = document.getElementById('theme-priority');
 const themesList = document.getElementById('themes-list');
 const filterButtons = document.querySelectorAll('.ant-radio-button');
-const addThemeBtn = document.getElementById('add-theme-btn');
 const addThemeModal = document.getElementById('add-theme-modal');
 const cancelAddBtn = document.getElementById('cancel-add');
 const closeAddModalBtn = document.getElementById('close-add-modal');
@@ -580,12 +579,6 @@ function setupEventListeners() {
         } else {
             addThemeForm.reportValidity();
         }
-    });
-    
-    // 新建主题按钮点击事件
-    addThemeBtn.addEventListener('click', function() {
-        isEditing = false;
-        showAddModal();
     });
     
     // 取消按钮点击事件

@@ -13,9 +13,20 @@ class Theme {
     constructor(id, mainTheme, completionStatus, additionTime, priority) {
         this.id = id;
         this.mainTheme = mainTheme;          // 主题
-        this.completionStatus = completionStatus || "已完成";  // 完成状态：已发布、已完成等
+        
+        // 确保完成状态与筛选器状态匹配
+        if (['待开始', '进行中', '已发布', '已完成'].includes(completionStatus)) {
+            this.completionStatus = completionStatus;
+        } else {
+            // 默认设为"已完成"
+            this.completionStatus = "已完成";
+        }
+        
         this.additionTime = additionTime || getCurrentDate();  // 添加时间，格式：YYYY/MM/DD
         this.priority = priority || "低";     // 优先级：高、低
+        
+        // 调试日志
+        console.log(`创建主题对象: id=${id}, 标题=${mainTheme}, 状态=${this.completionStatus}`);
     }
 }
 
@@ -362,7 +373,7 @@ async function fetchThemes() {
             console.log('记录字段:', fields); // 添加日志查看字段
             
             // 获取状态值
-            let status = fields.status || fields.状态 || '待开始';
+            let status = fields.status || fields.状态 || fields.完成状态 || '待开始';
             
             // 确保状态值是我们支持的状态之一
             if (!['待开始', '进行中', '已发布', '已完成'].includes(status)) {
@@ -381,12 +392,19 @@ async function fetchThemes() {
                 }
             }
             
+            // 获取其他字段值，尝试不同的可能命名
+            const title = fields.title || fields.主题 || fields.Title || '无标题';
+            const addTime = fields.additionTime || fields.添加时间 || fields.创建时间 || getCurrentDate();
+            const priority = fields.priority || fields.优先级 || fields.Priority || '低';
+            
+            console.log(`解析字段: 标题=${title}, 状态=${status}, 时间=${addTime}, 优先级=${priority}`);
+            
             return new Theme(
                 item.record_id,
-                fields.title || fields.主题 || '无标题',
+                title,
                 status,
-                fields.additionTime || fields.添加时间 || getCurrentDate(),
-                fields.priority || fields.优先级 || '低'
+                addTime,
+                priority
             );
         });
         
@@ -556,6 +574,7 @@ function setupEventListeners() {
             filterButtons.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             currentFilter = this.dataset.status;
+            console.log('切换状态筛选:', currentFilter);
             renderThemes();
         });
     });
@@ -805,9 +824,19 @@ async function getThemesFromIndexedDB() {
 function renderThemes() {
     themesList.innerHTML = '';
     
+    console.log('当前筛选:', currentFilter);
+    console.log('当前主题数:', themes.length);
+    console.log('主题列表:', themes);
+    
+    // 确保在"全部"标签下显示所有主题，其他标签下根据状态筛选
     const filteredThemes = currentFilter === 'all' 
         ? themes 
-        : themes.filter(theme => theme.completionStatus === currentFilter);
+        : themes.filter(theme => {
+            console.log(`比较主题状态: "${theme.completionStatus}" vs "${currentFilter}"`);
+            return theme.completionStatus === currentFilter;
+        });
+    
+    console.log('筛选后主题数:', filteredThemes.length);
     
     if (filteredThemes.length === 0) {
         themesList.innerHTML = '<div class="no-themes">暂无相关主题</div>';

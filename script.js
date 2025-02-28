@@ -817,14 +817,21 @@ function renderThemes() {
     filteredThemes.forEach(theme => {
         const themeItem = document.createElement('div');
         themeItem.className = 'theme-item';
+        if (theme.priority === '高') {
+            themeItem.classList.add('high-priority');
+        }
         themeItem.dataset.id = theme.id;
         
         themeItem.innerHTML = `
             <div class="theme-content">
                 <div class="theme-main">
                     <div class="theme-header">
-                        <div class="theme-title">${theme.mainTheme}</div>
-                        <div class="theme-status status-${theme.completionStatus}">${theme.completionStatus}</div>
+                        <div class="theme-title">${theme.mainTheme || '无标题'}</div>
+                    </div>
+                    <div class="theme-meta">
+                        <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
+                        <span class="date">${theme.additionTime || ''}</span>
+                        <span class="priority ${theme.priority === '高' ? 'high' : ''} ${theme.priority === '低' ? 'low' : ''}">${theme.priority || '低'}</span>
                     </div>
                 </div>
             </div>
@@ -845,37 +852,41 @@ function showDetailModal(id) {
     if (!theme) return;
     
     currentThemeId = id;
-    detailTitle.textContent = theme.mainTheme;
+    detailTitle.textContent = theme.mainTheme || '无标题';
     
     // 构建详情内容
-    const descriptionHtml = theme.description 
-        ? `
-            <div class="detail-item">
-                <div class="detail-label">描述</div>
-                <div class="detail-value">${theme.description}</div>
-            </div>
-        ` 
-        : '';
+    let formattedDate = theme.additionTime || '';
     
-    // 格式化日期
-    const createdDate = new Date(theme.additionTime);
-    const formattedDate = `${createdDate.getFullYear()}-${(createdDate.getMonth()+1).toString().padStart(2, '0')}-${createdDate.getDate().toString().padStart(2, '0')}`;
+    // 确保日期格式正确
+    if (formattedDate && formattedDate.includes('/')) {
+        // 已经是YYYY/MM/DD格式，保持不变
+    } else if (formattedDate) {
+        try {
+            const dateObj = new Date(formattedDate);
+            if (!isNaN(dateObj.getTime())) {
+                formattedDate = `${dateObj.getFullYear()}/${String(dateObj.getMonth()+1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
+            }
+        } catch (e) {
+            console.error('日期格式化错误:', e);
+        }
+    }
     
     themeDetailContent.innerHTML = `
         <div class="detail-item">
             <div class="detail-label">状态</div>
             <div class="detail-value">
-                <span class="detail-status status-${theme.completionStatus}">${theme.completionStatus}</span>
+                <span class="status ${theme.completionStatus === '已完成' ? 'completed' : ''} ${theme.completionStatus === '已发布' ? 'published' : ''}">${theme.completionStatus || '待处理'}</span>
             </div>
         </div>
-        ${descriptionHtml}
         <div class="detail-item">
             <div class="detail-label">添加时间</div>
             <div class="detail-value">${formattedDate}</div>
         </div>
         <div class="detail-item">
             <div class="detail-label">优先级</div>
-            <div class="detail-value">${theme.priority}</div>
+            <div class="detail-value">
+                <span class="priority ${theme.priority === '高' ? 'high' : ''} ${theme.priority === '低' ? 'low' : ''}">${theme.priority || '低'}</span>
+            </div>
         </div>
     `;
     
@@ -891,19 +902,16 @@ function hideDetailModal() {
 }
 
 // 编辑主题
-function editTheme(id) {
-    const theme = themes.find(t => t.id === id);
-    
+function editTheme(theme) {
     if (!theme) return;
     
     isEditing = true;
-    editingThemeId = id;
+    editingThemeId = theme.id;
     modalTitle.textContent = '编辑主题';
     
     // 填充表单数据
-    themeTitleInput.value = theme.mainTheme;
-    themeDescriptionInput.value = theme.description || '';
-    themeStatusSelect.value = theme.completionStatus;
+    themeTitleInput.value = theme.mainTheme || '';
+    themeStatusSelect.value = theme.completionStatus || '已完成';
     
     showModal();
 }

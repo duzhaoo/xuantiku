@@ -154,8 +154,12 @@ async function init() {
             console.log('离线模式：从IndexedDB加载数据');
             // 从IndexedDB加载主题数据
             themes = await getThemesFromIndexedDB() || [];
+            console.log('从IndexedDB加载了', themes.length, '条主题');
             renderThemes();
         }
+        
+        // 确保在飞书数据加载后也进行渲染
+        renderThemes();
     } catch (error) {
         console.error('飞书API连接失败，使用本地存储:', error);
         // 尝试从IndexedDB加载主题数据
@@ -170,6 +174,15 @@ async function init() {
         }
         renderThemes();
     }
+    
+    // 添加此检查作为最后保障
+    // 如果主题列表为空或全部标签下没有显示任何内容，则再次尝试渲染
+    setTimeout(() => {
+        if (themesList.children.length === 0 && currentFilter === 'all' && themes.length > 0) {
+            console.log('延迟渲染检查：发现主题列表为空，强制重新渲染');
+            renderThemes();
+        }
+    }, 1000);
     
     // 设置事件监听器
     setupEventListeners();
@@ -364,6 +377,7 @@ async function fetchThemes() {
         if (!data.data || !data.data.items) {
             console.log('未找到数据，使用空数组');
             themes = [];
+            renderThemes(); // 及时渲染空数据状态
             return;
         }
         
@@ -410,10 +424,15 @@ async function fetchThemes() {
         
         console.log('成功获取主题数据，共', themes.length, '条');
         
+        // 立即渲染主题数据，确保UI更新
+        renderThemes();
+        
         // 保存到IndexedDB
         await saveThemesToIndexedDB(themes);
     } catch (error) {
         console.error('获取主题数据失败:', error);
+        // 即使出错，也尝试渲染现有数据
+        renderThemes();
         throw error;
     }
 }
@@ -826,11 +845,17 @@ function renderThemes() {
     
     console.log('当前筛选:', currentFilter);
     console.log('当前主题数:', themes.length);
-    console.log('主题列表:', themes);
+    console.log('主题列表:', JSON.stringify(themes));
+    
+    // 确保themes是正确的数组
+    if (!Array.isArray(themes)) {
+        console.error('themes不是数组:', themes);
+        themes = [];
+    }
     
     // 确保在"全部"标签下显示所有主题，其他标签下根据状态筛选
     const filteredThemes = currentFilter === 'all' 
-        ? themes 
+        ? [...themes] // 使用数组副本避免引用问题
         : themes.filter(theme => {
             console.log(`比较主题状态: "${theme.completionStatus}" vs "${currentFilter}"`);
             return theme.completionStatus === currentFilter;
@@ -873,6 +898,8 @@ function renderThemes() {
         
         themesList.appendChild(themeItem);
     });
+    
+    console.log('渲染完成，列表项数:', themesList.children.length);
 }
 
 // 显示详情模态框

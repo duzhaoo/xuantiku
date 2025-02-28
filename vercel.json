@@ -9,30 +9,37 @@
     { "src": "service-worker.js", "use": "@vercel/static" },
     { "src": "icons/*.png", "use": "@vercel/static" }
   ],
-  "routes": [
-    { "src": "/api/get-feishu-token", "dest": "/api/get-feishu-token.js" },
-    { "src": "/api/feishu-proxy", "dest": "/api/feishu-proxy.js" },
-    { "src": "/service-worker.js", "dest": "/service-worker.js", "headers": { "Cache-Control": "public, max-age=0, must-revalidate" } },
-    { "src": "/manifest.json", "dest": "/manifest.json", "headers": { "Content-Type": "application/manifest+json", "Cache-Control": "public, max-age=3600" } },
-    { "src": "/icons/(.*)", "dest": "/icons/$1", "headers": { "Cache-Control": "public, max-age=86400" } },
-    { "src": "/(.*)", "dest": "/$1" }
+  "rewrites": [
+    { "source": "/api/get-feishu-token", "destination": "/api/get-feishu-token.js" },
+    { "source": "/api/feishu-proxy", "destination": "/api/feishu-proxy.js" },
+    { "source": "/(.*)", "destination": "/$1" }
   ],
   "headers": [
     {
+      "source": "/service-worker.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/icons/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
       ]
     }
   ]

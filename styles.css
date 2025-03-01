@@ -225,6 +225,7 @@ body {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     flex-wrap: wrap; /* 在小屏幕上允许换行 */
     gap: 16px; /* 筛选组之间的间距 */
+    min-height: 60px; /* 添加最小高度防止抖动 */
 }
 
 .filter-group {
@@ -250,15 +251,22 @@ body {
     .filter-container {
         flex-direction: column;
         align-items: flex-start;
+        min-height: 120px; /* 为移动设备设置更大的最小高度 */
     }
     
     .filter-group {
         width: 100%;
         margin-bottom: 10px;
+        height: auto; /* 确保在移动设备上高度自适应 */
     }
     
     .priority-filter {
         margin-left: 0;
+    }
+    
+    .ant-radio-group {
+        height: auto; /* 在移动设备上允许自动高度 */
+        min-height: 36px; /* 设置最小高度 */
     }
 }
 
@@ -270,6 +278,7 @@ body {
     padding: 4px;
     gap: 4px;
     flex-wrap: wrap; /* 在宽度不足时允许换行 */
+    height: 36px; /* 添加固定高度防止抖动 */
 }
 
 .ant-radio-button {
@@ -285,6 +294,9 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap; /* 防止按钮文字换行 */
+    min-width: 60px; /* 添加最小宽度，使按钮宽度一致 */
+    height: 28px; /* 添加固定高度 */
+    box-sizing: border-box; /* 确保padding不会增加元素总高度 */
 }
 
 .ant-radio-button input {
@@ -295,6 +307,8 @@ body {
     background-color: white;
     color: var(--primary-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: none; /* 确保没有边框导致的尺寸变化 */
+    transform: none; /* 确保没有变换导致的尺寸变化 */
 }
 
 .ant-radio-button:hover:not(.active) {

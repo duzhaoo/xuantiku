@@ -126,6 +126,7 @@ const themeDetailContent = document.getElementById('theme-detail-content');
 const editThemeBtn = document.getElementById('edit-theme');
 const closeDetailBtn = document.getElementById('close-detail');
 const detailTitle = document.getElementById('detail-title');
+const addThemeBtn = document.getElementById('add-theme-btn'); // 新增主题按钮
 
 let currentThemeId = null;
 
@@ -595,6 +596,17 @@ function setupEventListeners() {
     
     // 优先级筛选器点击事件处理
     handlePriorityFilterClick();
+    
+    // 新增主题按钮点击事件
+    addThemeBtn.addEventListener('click', function() {
+        // 重置表单并设置默认值
+        resetForm();
+        // 设置默认值
+        themeStatusSelect.value = '待开始';
+        themePrioritySelect.value = '高';
+        // 显示添加模态框
+        showAddModal();
+    });
     
     // 提交按钮点击事件
     confirmAddBtn.addEventListener('click', async function() {
